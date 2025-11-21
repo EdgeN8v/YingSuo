@@ -55,3 +55,14 @@ android-sdk/
 *.apk
 build_apk*.ps1
 setup_and_build.ps1
+
+# IDE 配置文件
+.project
+.classpath
+.settings/
+*.iml
+.idea/
+
+# 系统文件
+.DS_Store
+Thumbs.db
