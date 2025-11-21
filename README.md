@@ -101,6 +101,31 @@ A：Gradle 使用的 java 版本与 Android Studio 使用的不一致。Gradle �
 1. FORK -> PR
 2. 加入影梭开发，共同完善
 
+## 百度地图 API 配置
+
+### ⚠️ 重要说明
+
+本项目使用百度地图 SDK，需要自行申请百度地图 API Key 才能正常使用地图功能。
+
+**原作者的 API Key 已失效**，你需要：
+
+1. 在[百度地图开放平台](https://lbsyun.baidu.com/)注册并创建应用
+2. 获取你自己的 API Key
+3. 按照[配置百度地图API完整指南.md](./配置百度地图API完整指南.md)进行配置
+
+### 🔒 安全提示
+
+- ⚠️ **绝对不要将 `local.properties` 文件上传到 GitHub**
+- ⚠️ **绝对不要将 `keystore/` 目录上传到 GitHub**
+- ⚠️ **绝对不要在代码中硬编码 API Key**
+- ✅ 这些文件已在 `.gitignore` 中被忽略
+
+### 📖 详细配置教程
+
+完整配置步骤请参考：[配置百度地图API完整指南.md](./配置百度地图API完整指南.md)
+
+---
+
 ## 许可证
 GPL-3.0-only © ZCShou
 

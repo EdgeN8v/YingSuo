@@ -918,7 +918,8 @@ public class MainActivity extends BaseActivity implements SensorEventListener {
     // 记录请求的位置信息
     private void recordCurrentLocation(double lng, double lat) {
         //参数坐标系：bd09
-        final String safeCode = BuildConfig.MAPS_SAFE_CODE;
+        // final String safeCode = BuildConfig.MAPS_SAFE_CODE;
+        final String safeCode = "";
         final String ak = sharedPreferences.getString("setting_map_key", BuildConfig.MAPS_API_KEY);
         double[] latLng = MapUtils.bd2wgs(lng, lat);
         //bd09坐标的位置信息
