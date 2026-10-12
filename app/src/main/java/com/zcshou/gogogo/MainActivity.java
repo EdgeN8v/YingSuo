@@ -210,8 +210,8 @@ public class MainActivity extends BaseActivity implements SensorEventListener {
         initSearchView();
 
         initUpdateVersion();
-
-        checkUpdateVersion(false);
+        // 已移除启动时自动检查更新：该检查指向上游仓库，会导致每次启动都弹出更新提示。
+        // 仍可通过侧边栏菜单手动检查更新（nav_update）。
     }
 
     @Override
