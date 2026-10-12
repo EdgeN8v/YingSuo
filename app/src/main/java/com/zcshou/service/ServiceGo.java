@@ -104,21 +104,25 @@ public class ServiceGo extends Service {
 
     @Override
     public void onTaskRemoved(Intent rootIntent) {
-        // 用户从后台划掉 app：立刻停止模拟，onDestroy 会移除模拟定位提供者
+        // 用户从后台划掉 app：进程随时会被杀，先同步移除模拟定位提供者，再停止服务
+        isStop = true;
+        removeTestProviderNetwork();
+        removeTestProviderGPS();
         stopSelf();
         super.onTaskRemoved(rootIntent);
     }
 
     @Override
     public void onDestroy() {
+        // 先停止推送假位置，并立刻移除模拟定位提供者，再做其他慢的清理。
+        // 从后台划掉 app 时进程很快会被系统杀掉，放在后面会来不及执行，假定位就残留了。
         isStop = true;
         mLocHandler.removeMessages(HANDLER_MSG_ID);
         mLocHandlerThread.quit();
-
-        mJoyStick.destroy();
-
         removeTestProviderNetwork();
         removeTestProviderGPS();
+
+        mJoyStick.destroy();
 
         unregisterReceiver(mActReceiver);
         stopForeground(STOP_FOREGROUND_REMOVE);
@@ -228,12 +232,12 @@ public class ServiceGo extends Service {
         try {
             lm.setTestProviderEnabled(provider, false);
         } catch (Exception e) {
-            XLog.i("SERVICEGO: setTestProviderEnabled(false) skipped: " + provider);
+            XLog.i("SERVICEGO: setTestProviderEnabled(false) skipped: " + provider + " - " + e);
         }
         try {
             lm.removeTestProvider(provider);
         } catch (Exception e) {
-            XLog.i("SERVICEGO: removeTestProvider skipped: " + provider);
+            XLog.i("SERVICEGO: removeTestProvider skipped: " + provider + " - " + e);
         }
     }
 
