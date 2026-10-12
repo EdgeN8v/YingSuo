@@ -87,13 +87,26 @@ public class ServiceGo extends Service {
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
+        if (intent == null) {
+            // 被系统重建时没有位置信息，不应在未知位置继续模拟，直接停止
+            stopSelf();
+            return START_NOT_STICKY;
+        }
         mCurLng = intent.getDoubleExtra(MainActivity.LNG_MSG_ID, DEFAULT_LNG);
         mCurLat = intent.getDoubleExtra(MainActivity.LAT_MSG_ID, DEFAULT_LAT);
         mCurAlt = intent.getDoubleExtra(MainActivity.ALT_MSG_ID, DEFAULT_ALT);
 
         mJoyStick.setCurrentPosition(mCurLng, mCurLat, mCurAlt);
 
-        return super.onStartCommand(intent, flags, startId);
+        super.onStartCommand(intent, flags, startId);
+        return START_NOT_STICKY;
+    }
+
+    @Override
+    public void onTaskRemoved(Intent rootIntent) {
+        // 用户从后台划掉 app：立刻停止模拟，onDestroy 会移除模拟定位提供者
+        stopSelf();
+        super.onTaskRemoved(rootIntent);
     }
 
     @Override
@@ -203,14 +216,35 @@ public class ServiceGo extends Service {
     }
 
     private void removeTestProviderGPS() {
+        removeTestProvider(mLocManager, LocationManager.GPS_PROVIDER);
+    }
+
+    /**
+     * 无条件移除模拟定位提供者。
+     * 不能依赖 isProviderEnabled 判断：提供者被禁用或进程被杀后状态不一致时，会漏删，
+     * 导致系统一直保留最后一个假位置（导航会显示卫星信号弱）。
+     */
+    private static void removeTestProvider(LocationManager lm, String provider) {
         try {
-            if (mLocManager.isProviderEnabled(LocationManager.GPS_PROVIDER)) {
-                mLocManager.setTestProviderEnabled(LocationManager.GPS_PROVIDER, false);
-                mLocManager.removeTestProvider(LocationManager.GPS_PROVIDER);
-            }
+            lm.setTestProviderEnabled(provider, false);
         } catch (Exception e) {
-            XLog.e("SERVICEGO: ERROR - removeTestProviderGPS");
+            XLog.i("SERVICEGO: setTestProviderEnabled(false) skipped: " + provider);
         }
+        try {
+            lm.removeTestProvider(provider);
+        } catch (Exception e) {
+            XLog.i("SERVICEGO: removeTestProvider skipped: " + provider);
+        }
+    }
+
+    /** 清理残留的模拟定位提供者。必须在没有模拟服务运行时调用（如进程启动时）。 */
+    public static void clearTestProviders(Context context) {
+        LocationManager lm = (LocationManager) context.getSystemService(Context.LOCATION_SERVICE);
+        if (lm == null) {
+            return;
+        }
+        removeTestProvider(lm, LocationManager.GPS_PROVIDER);
+        removeTestProvider(lm, LocationManager.NETWORK_PROVIDER);
     }
 
     // 注意下面临时添加 @SuppressLint("wrongconstant") 以处理 addTestProvider 参数值的 lint 错误
@@ -256,14 +290,7 @@ public class ServiceGo extends Service {
     }
 
     private void removeTestProviderNetwork() {
-        try {
-            if (mLocManager.isProviderEnabled(LocationManager.NETWORK_PROVIDER)) {
-                mLocManager.setTestProviderEnabled(LocationManager.NETWORK_PROVIDER, false);
-                mLocManager.removeTestProvider(LocationManager.NETWORK_PROVIDER);
-            }
-        } catch (Exception e) {
-            XLog.e("SERVICEGO: ERROR - removeTestProviderNetwork");
-        }
+        removeTestProvider(mLocManager, LocationManager.NETWORK_PROVIDER);
     }
 
     // 注意下面临时添加 @SuppressLint("wrongconstant") 以处理 addTestProvider 参数值的 lint 错误

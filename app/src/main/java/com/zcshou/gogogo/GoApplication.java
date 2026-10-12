@@ -1,6 +1,7 @@
 package com.zcshou.gogogo;
 
 import android.app.Application;
+import android.os.Build;
 
 import com.baidu.location.LocationClient;
 import com.baidu.mapapi.CoordType;
@@ -16,6 +17,8 @@ import com.elvishew.xlog.printer.file.backup.NeverBackupStrategy;
 import com.elvishew.xlog.printer.file.clean.FileLastModifiedCleanStrategy;
 import com.elvishew.xlog.printer.file.naming.ChangelessFileNameGenerator;
 
+import com.zcshou.service.ServiceGo;
+
 import java.io.File;
 
 public class GoApplication extends Application {
@@ -28,6 +31,12 @@ public class GoApplication extends Application {
         super.onCreate();
 
         initXlog();
+
+        // 主进程启动时，模拟服务一定还没运行：清掉上次被杀/划掉后残留的假定位，
+        // 避免导航等应用一直读到过期的模拟位置（卫星信号弱）。百度定位的 :remote 进程不能清。
+        if (Build.VERSION.SDK_INT >= 28 && getPackageName().equals(Application.getProcessName())) {
+            ServiceGo.clearTestProviders(this);
+        }
 
         // 百度地图 7.5 开始，要求必须同意隐私政策，默认为false
         SDKInitializer.setAgreePrivacy(this, true);
